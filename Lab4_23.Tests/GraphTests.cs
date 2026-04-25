@@ -702,5 +702,232 @@ C;D;10
                 Assert.That(dist[v], Is.Not.EqualTo(int.MaxValue),
                     $"Вершина {v} должна быть достижима (граф связный)");
         }
+        //  ЛР6 — Тесты точек сочленения
+
+        /// <summary>
+        /// Граф-мост: A--B--C. Вершина B — единственная точка сочленения.
+        /// Удаление B разрывает граф на {A} и {C}.
+        /// </summary>
+        private static Graph BridgeGraph() => GraphFromText(@"
+VERTICES
+A
+B
+C
+EDGES
+A;B;1
+B;C;1
+");
+
+        /// <summary>
+        /// Граф-цикл: A-B-C-A. Точек сочленения нет — граф двусвязен.
+        /// </summary>
+        private static Graph CycleGraph() => GraphFromText(@"
+VERTICES
+A
+B
+C
+EDGES
+A;B;1
+B;C;1
+C;A;1
+");
+
+        /// <summary>
+        /// Граф с явной точкой сочленения в центре:
+        ///   A--B--C
+        ///      |
+        ///      D
+        /// B — точка сочленения (удаление разрывает A от C и D).
+        /// </summary>
+        private static Graph StarGraph() => GraphFromText(@"
+VERTICES
+A
+B
+C
+D
+EDGES
+A;B;1
+B;C;1
+B;D;1
+");
+
+        [Test]
+        public void FindArticulationPoints_BridgeGraph_FindsB()
+        {
+            var g = BridgeGraph();
+            var points = g.FindArticulationPoints();
+            Assert.That(points, Does.Contain("B"));
+        }
+
+        [Test]
+        public void FindArticulationPoints_BridgeGraph_OnlyB()
+        {
+            var g = BridgeGraph();
+            var points = g.FindArticulationPoints();
+            Assert.That(points.Count, Is.EqualTo(1));
+        }
+
+        [Test]
+        public void FindArticulationPoints_CycleGraph_NoPoints()
+        {
+            // В цикле нет точек сочленения
+            var g = CycleGraph();
+            var points = g.FindArticulationPoints();
+            Assert.That(points, Is.Empty);
+        }
+
+        [Test]
+        public void FindArticulationPoints_StarGraph_FindsB()
+        {
+            var g = StarGraph();
+            var points = g.FindArticulationPoints();
+            Assert.That(points, Does.Contain("B"));
+        }
+
+        [Test]
+        public void FindArticulationPoints_StarGraph_NotAOrC()
+        {
+            var g = StarGraph();
+            var points = g.FindArticulationPoints();
+            Assert.That(points, Does.Not.Contain("A"));
+            Assert.That(points, Does.Not.Contain("C"));
+        }
+
+        [Test]
+        public void FindArticulationPoints_SingleVertex_NoPoints()
+        {
+            var g = SingleVertexGraph();
+            var points = g.FindArticulationPoints();
+            Assert.That(points, Is.Empty);
+        }
+
+        [Test]
+        public void FindArticulationPoints_DisconnectedGraph_NoPoints()
+        {
+            // Несвязный граф из двух рёбер A-B и C-D — нет точек сочленения
+            var g = DisconnectedGraph();
+            var points = g.FindArticulationPoints();
+            Assert.That(points, Is.Empty);
+        }
+
+        [Test]
+        public void FindArticulationPoints_RealFile_ReturnsResult()
+        {
+            string path = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "energy_graph.txt");
+            if (!File.Exists(path))
+                Assert.Ignore("Файл energy_graph.txt не найден — пропускаем.");
+
+            var g = new Graph();
+            g.LoadFromFile(path);
+
+            // Просто проверяем что метод отрабатывает без исключений
+            // и возвращает список (может быть пустым)
+            var points = g.FindArticulationPoints();
+            Assert.That(points, Is.Not.Null);
+        }
+
+        //  ЛР6 — Тесты МОД (BuildMST_Prim)
+
+        [Test]
+        public void BuildMST_Prim_EdgeCount_IsVerticesMinusOne()
+        {
+            // МОД связного графа из n вершин содержит ровно n-1 рёбер
+            var g = WeightedGraph(); // 5 вершин
+            var mst = g.BuildMST_Prim();
+            Assert.That(mst.Count, Is.EqualTo(g.Vertices.Count - 1));
+        }
+
+        [Test]
+        public void BuildMST_Prim_LinearGraph_EdgeCount()
+        {
+            var g = LinearGraph(); // 4 вершины
+            var mst = g.BuildMST_Prim();
+            Assert.That(mst.Count, Is.EqualTo(3));
+        }
+
+        [Test]
+        public void BuildMST_Prim_AllVerticesCovered()
+        {
+            // Все вершины должны присутствовать в рёбрах МОД
+            var g = WeightedGraph();
+            var mst = g.BuildMST_Prim();
+            var covered = new HashSet<string>();
+            foreach (var (from, to, _) in mst)
+            {
+                covered.Add(from);
+                covered.Add(to);
+            }
+            foreach (string v in g.Vertices)
+                Assert.That(covered, Does.Contain(v),
+                    $"Вершина {v} должна быть покрыта МОД");
+        }
+
+        [Test]
+        public void BuildMST_Prim_TotalWeightLessOrEqualAllEdges()
+        {
+            // Суммарный вес МОД не может превышать сумму всех рёбер графа
+            var g = WeightedGraph();
+            var mst = g.BuildMST_Prim();
+            int mstWeight = mst.Sum(e => e.weight);
+            int totalWeight = g.Vertices.Sum(v => g.GetNeighbors(v).Sum(n => n.weight)) / 2;
+            Assert.That(mstWeight, Is.LessThanOrEqualTo(totalWeight));
+        }
+
+        [Test]
+        public void BuildMST_Prim_LinearGraph_WeightIsCorrect()
+        {
+            // A--5--B--1--C--10--D: МОД = все 3 ребра, вес = 16
+            var g = LinearGraph();
+            var mst = g.BuildMST_Prim();
+            int total = mst.Sum(e => e.weight);
+            Assert.That(total, Is.EqualTo(16));
+        }
+
+        [Test]
+        public void BuildMST_Prim_NoSelfLoops()
+        {
+            // В МОД не должно быть рёбер вида (v, v)
+            var g = WeightedGraph();
+            var mst = g.BuildMST_Prim();
+            foreach (var (from, to, _) in mst)
+                Assert.That(from, Is.Not.EqualTo(to));
+        }
+
+        [Test]
+        public void BuildMST_Prim_EdgesExistInGraph()
+        {
+            // Каждое ребро МОД должно существовать в исходном графе
+            var g = WeightedGraph();
+            var mst = g.BuildMST_Prim();
+            foreach (var (from, to, weight) in mst)
+            {
+                var neighbors = g.GetNeighbors(from).Select(n => n.neighbor);
+                Assert.That(neighbors, Does.Contain(to),
+                    $"Ребро {from}-{to} не существует в графе");
+            }
+        }
+
+        [Test]
+        public void BuildMST_Prim_SingleVertex_EmptyMST()
+        {
+            var g = SingleVertexGraph();
+            var mst = g.BuildMST_Prim();
+            Assert.That(mst, Is.Empty);
+        }
+
+        [Test]
+        public void BuildMST_Prim_RealFile_EdgeCount()
+        {
+            string path = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "energy_graph.txt");
+            if (!File.Exists(path))
+                Assert.Ignore("Файл energy_graph.txt не найден — пропускаем.");
+
+            var g = new Graph();
+            g.LoadFromFile(path);
+
+            var mst = g.BuildMST_Prim();
+            // МОД связного графа из n вершин = n-1 рёбер
+            Assert.That(mst.Count, Is.EqualTo(g.Vertices.Count - 1));
+        }
     }
 }
