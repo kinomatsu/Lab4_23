@@ -233,5 +233,94 @@ namespace Lab4_23
 
             return components;
         }
+        /// Алгоритм Дейкстры — кратчайшие расстояния от source до всех вершин.
+        /// Работает только с неотрицательными весами рёбер.
+        /// Возвращает:
+        ///   dist    — словарь кратчайших расстояний от source до каждой вершины;
+        ///   previous — словарь предков для восстановления пути.
+        /// </summary>
+        public (Dictionary<string, int> dist, Dictionary<string, string?> previous)
+            Dijkstra(string source)
+        {
+            //инициализация расстояний — все бесконечность, кроме старта
+            var dist = new Dictionary<string, int>();
+            var previous = new Dictionary<string, string?>();
+            var unvisited = new HashSet<string>();
+
+            foreach (string v in _adjacency.Keys)
+            {
+                dist[v] = int.MaxValue; //"бесконечность"
+                previous[v] = null;
+                unvisited.Add(v);
+            }
+            dist[source] = 0; // расстояние до самого себя = 0
+
+            while (unvisited.Count > 0)
+            {
+                // выбираем непосещённую вершину с минимальным расстоянием
+                string? current = null;
+                int minDist = int.MaxValue;
+                foreach (string v in unvisited)
+                {
+                    if (dist[v] < minDist)
+                    {
+                        minDist = dist[v];
+                        current = v;
+                    }
+                }
+
+                // если минимальное расстояние — бесконечность,
+                // оставшиеся вершины недостижимы — выходим
+                if (current == null || dist[current] == int.MaxValue)
+                    break;
+
+                unvisited.Remove(current);
+
+                // релаксация рёбер — обновляем расстояния до соседей
+                foreach (var (neighbor, weight) in _adjacency[current])
+                {
+                    if (!unvisited.Contains(neighbor)) continue;
+
+                    // формула релаксации: d[v] = min(d[v], d[u] + w(u,v))
+                    int newDist = dist[current] + weight;
+                    if (newDist < dist[neighbor])
+                    {
+                        dist[neighbor] = newDist;
+                        previous[neighbor] = current; // запоминаем предка
+                    }
+                }
+            }
+
+            return (dist, previous);
+        }
+
+        /// <summary>
+        /// Восстанавливает путь от source до target
+        /// по словарю предков, полученному из Dijkstra().
+        /// Возвращает список вершин маршрута или пустой список, если путь не найден.
+        /// </summary>
+        public List<string> GetDijkstraPath(
+            Dictionary<string, string?> previous,
+            string source,
+            string target)
+        {
+            //обратный проход по словарю предков
+            var path = new List<string>();
+            string? current = target;
+
+            while (current != null)
+            {
+                path.Add(current);
+                if (current == source) break;
+                previous.TryGetValue(current, out current);
+            }
+
+            //если путь не дошёл до source — маршрут не существует
+            if (path.Count == 0 || path[^1] != source)
+                return new List<string>();
+
+            path.Reverse(); //переворачиваем — был от цели к старту
+            return path;
+        }
     }
 }
