@@ -45,6 +45,9 @@
             this.lblSectionDijkstra = new System.Windows.Forms.Label();
             this.btnDijkstraAll = new System.Windows.Forms.Button();
             this.btnDijkstraPath = new System.Windows.Forms.Button();
+            this.lblSectionLab6 = new System.Windows.Forms.Label();
+            this.btnArticulation = new System.Windows.Forms.Button();
+            this.btnMST = new System.Windows.Forms.Button();
             this.panelInput = new System.Windows.Forms.Panel();
             this.cmbEnd = new System.Windows.Forms.ComboBox();
             this.lblEndVertex = new System.Windows.Forms.Label();
@@ -86,6 +89,9 @@
             this.panelButtons.Controls.Add(this.btnDijkstraPath);
             this.panelButtons.Controls.Add(this.btnDijkstraAll);
             this.panelButtons.Controls.Add(this.lblSectionDijkstra);
+            this.panelButtons.Controls.Add(this.btnMST);
+            this.panelButtons.Controls.Add(this.btnArticulation);
+            this.panelButtons.Controls.Add(this.lblSectionLab6);
             this.panelButtons.Location = new System.Drawing.Point(12, 50);
             this.panelButtons.Name = "panelButtons";
             this.panelButtons.Size = new System.Drawing.Size(220, 590);
@@ -279,6 +285,49 @@
             this.btnDijkstraPath.Cursor = System.Windows.Forms.Cursors.Hand;
             this.btnDijkstraPath.Click += new System.EventHandler(this.btnDijkstraPath_Click);
             // 
+            // lblSectionLab6
+            // 
+            this.lblSectionLab6.AutoSize = true;
+            this.lblSectionLab6.Font = new System.Drawing.Font("Segoe UI", 8F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point);
+            this.lblSectionLab6.ForeColor = System.Drawing.Color.Gray;
+            this.lblSectionLab6.Location = new System.Drawing.Point(8, 514);
+            this.lblSectionLab6.Name = "lblSectionLab6";
+            this.lblSectionLab6.Size = new System.Drawing.Size(100, 13);
+            this.lblSectionLab6.TabIndex = 13;
+            this.lblSectionLab6.Text = "── ЛР6 ──";
+            // 
+            // btnArticulation — точки сочленения (алгоритм Тарьяна)
+            // 
+            this.btnArticulation.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(22)))), ((int)(((byte)(160)))), ((int)(((byte)(133)))));
+            this.btnArticulation.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            this.btnArticulation.FlatAppearance.BorderSize = 0;
+            this.btnArticulation.Font = new System.Drawing.Font("Segoe UI", 9F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point);
+            this.btnArticulation.ForeColor = System.Drawing.Color.White;
+            this.btnArticulation.Location = new System.Drawing.Point(8, 534);
+            this.btnArticulation.Name = "btnArticulation";
+            this.btnArticulation.Size = new System.Drawing.Size(200, 38);
+            this.btnArticulation.TabIndex = 14;
+            this.btnArticulation.Text = "Точки сочленения";
+            this.btnArticulation.UseVisualStyleBackColor = false;
+            this.btnArticulation.Cursor = System.Windows.Forms.Cursors.Hand;
+            this.btnArticulation.Click += new System.EventHandler(this.btnArticulation_Click);
+            // 
+            // btnMST — минимальное остовное дерево (алгоритм Прима)
+            // 
+            this.btnMST.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(39)))), ((int)(((byte)(174)))), ((int)(((byte)(96)))));
+            this.btnMST.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            this.btnMST.FlatAppearance.BorderSize = 0;
+            this.btnMST.Font = new System.Drawing.Font("Segoe UI", 9F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point);
+            this.btnMST.ForeColor = System.Drawing.Color.White;
+            this.btnMST.Location = new System.Drawing.Point(8, 580);
+            this.btnMST.Name = "btnMST";
+            this.btnMST.Size = new System.Drawing.Size(200, 38);
+            this.btnMST.TabIndex = 15;
+            this.btnMST.Text = "МОД (алгоритм Прима)";
+            this.btnMST.UseVisualStyleBackColor = false;
+            this.btnMST.Cursor = System.Windows.Forms.Cursors.Hand;
+            this.btnMST.Click += new System.EventHandler(this.btnMST_Click);
+            // 
             // panelInput
             // 
             this.panelInput.BackColor = System.Drawing.Color.White;
@@ -370,7 +419,7 @@
             this.MinimumSize = new System.Drawing.Size(900, 600);
             this.Name = "Form1";
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
-            this.Text = "Лабораторные работы №4–5 — Граф энергосистемы (вариант 23)";
+            this.Text = "Лабораторные работы №4–6 — Граф энергосистемы (вариант 23)";
 
             this.panelButtons.ResumeLayout(false);
             this.panelButtons.PerformLayout();
@@ -404,5 +453,8 @@
         private System.Windows.Forms.Label lblSectionDijkstra;
         private System.Windows.Forms.Button btnDijkstraAll;
         private System.Windows.Forms.Button btnDijkstraPath;
+        private System.Windows.Forms.Label lblSectionLab6;
+        private System.Windows.Forms.Button btnArticulation;
+        private System.Windows.Forms.Button btnMST;
     }
 }

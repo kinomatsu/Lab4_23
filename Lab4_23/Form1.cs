@@ -93,7 +93,7 @@ namespace Lab4_23
             RunDijkstraAll(start);
         }
 
-        //обработчик — Дейкстра, кратчайший маршрут A→B
+        // ЛР5 ДОБАВЛЕНО: обработчик — Дейкстра, кратчайший маршрут A→B
         private void btnDijkstraPath_Click(object sender, EventArgs e)
         {
             if (!CheckLoaded()) return;
@@ -102,6 +102,20 @@ namespace Lab4_23
             if (string.IsNullOrEmpty(start) || string.IsNullOrEmpty(end))
             { Warn("Выберите начальную и конечную вершины."); return; }
             RunDijkstraPath(start, end);
+        }
+─
+        // Обработчик: точки сочленения
+        private void btnArticulation_Click(object sender, EventArgs e)
+        {
+            if (!CheckLoaded()) return;
+            RunArticulationPoints();
+        }
+
+        // ЛР6: обработчик — МОД алгоритмом Прима
+        private void btnMST_Click(object sender, EventArgs e)
+        {
+            if (!CheckLoaded()) return;
+            RunMST();
         }
 
         //  Загрузка графа
@@ -298,10 +312,10 @@ namespace Lab4_23
                 "затем релаксация рёбер: d[v] = min(d[v], d[u] + w(u,v)).");
             AppendLine(Color.Empty, "");
 
-            // запускаем Дейкстру от выбранной вершины
+            // ЛР5 ДОБАВЛЕНО: запускаем Дейкстру от выбранной вершины
             var (dist, _) = _graph.Dijkstra(source);
 
-            // сортируем по расстоянию для удобного вывода
+            // ЛР5 ДОБАВЛЕНО: сортируем по расстоянию для удобного вывода
             var sorted = dist.OrderBy(kv => kv.Value).ToList();
 
             AppendLine(Color.FromArgb(255, 200, 100),
@@ -353,6 +367,7 @@ namespace Lab4_23
                 AppendLine(Color.FromArgb(180, 220, 255),
                     "  " + string.Join(" → ", path));
 
+                //трассировка — показываем вес каждого ребра
                 AppendLine(Color.Empty, "");
                 AppendLine(Color.FromArgb(255, 200, 100), "Трассировка пути:");
                 int cumulative = 0;
@@ -360,6 +375,7 @@ namespace Lab4_23
                 {
                     string from = path[i];
                     string to = path[i + 1];
+                    //находим вес ребра между соседними вершинами пути
                     int edgeW = _graph.GetNeighbors(from)
                                       .First(n => n.neighbor == to).weight;
                     cumulative += edgeW;
@@ -367,6 +383,95 @@ namespace Lab4_23
                         $"  {from} → {to}  [{edgeW} МВт]  (итого: {cumulative} МВт)");
                 }
             }
+            AppendLine(Color.Empty, "");
+        }
+
+        //  Точки сочленения
+
+        private void RunArticulationPoints()
+        {
+            AppendHeader("ТОЧКИ СОЧЛЕНЕНИЯ ГРАФА (алгоритм Тарьяна)");
+            AppendLine(Color.FromArgb(160, 160, 160),
+                "Алгоритм: DFS с вычислением disc[v] и low[v].");
+            AppendLine(Color.FromArgb(160, 160, 160),
+                "Условие: low[child] >= disc[v] — вершина v является точкой сочленения.");
+            AppendLine(Color.Empty, "");
+
+            // ЛР6: вызов алгоритма
+            var points = _graph.FindArticulationPoints();
+
+            if (points.Count == 0)
+            {
+                AppendLine(Color.FromArgb(80, 200, 120),
+                    "Точек сочленения не найдено.");
+                AppendLine(Color.FromArgb(160, 160, 160),
+                    "Граф двусвязен — нет критически важных узлов.");
+            }
+            else
+            {
+                AppendLine(Color.FromArgb(255, 200, 100),
+                    $"Найдено точек сочленения: {points.Count}");
+                AppendLine(Color.Empty, "");
+
+                for (int i = 0; i < points.Count; i++)
+                {
+                    AppendLine(Color.FromArgb(255, 100, 100),
+                        $"  {i + 1,2}. {points[i]}");
+                }
+
+                AppendLine(Color.Empty, "");
+                AppendLine(Color.FromArgb(255, 150, 50),
+                    "Интерпретация: удаление любой из этих вершин разрывает энергосеть");
+                AppendLine(Color.FromArgb(255, 150, 50),
+                    "на изолированные сегменты. Это критически важные узлы инфраструктуры.");
+            }
+            AppendLine(Color.Empty, "");
+        }
+
+        //  Минимальное остовное дерево (алгоритм Прима)
+
+        private void RunMST()
+        {
+            AppendHeader("МОД — МИНИМАЛЬНОЕ ОСТОВНОЕ ДЕРЕВО (алгоритм Прима)");
+            AppendLine(Color.FromArgb(160, 160, 160),
+                "Алгоритм: жадно добавляет ребро минимального веса,");
+            AppendLine(Color.FromArgb(160, 160, 160),
+                "соединяющее вершину внутри МОД с вершиной вне его.");
+            AppendLine(Color.Empty, "");
+
+            // ЛР6: строим МОД
+            var mstEdges = _graph.BuildMST_Prim();
+
+            if (mstEdges.Count == 0)
+            {
+                AppendLine(Color.FromArgb(255, 100, 100),
+                    "МОД не построен — граф пуст или несвязный.");
+                AppendLine(Color.Empty, "");
+                return;
+            }
+
+            // ЛР6: выводим рёбра МОД и считаем суммарный вес
+            int totalWeight = 0;
+            AppendLine(Color.FromArgb(255, 200, 100),
+                $"  {"Ребро",-45} {"Мощность",10}");
+            AppendLine(Color.FromArgb(100, 100, 100), new string('-', 58));
+
+            foreach (var (from, to, weight) in mstEdges.OrderBy(e => e.weight))
+            {
+                string edge = $"{from} — {to}";
+                AppendLine(Color.FromArgb(80, 200, 120),
+                    $"  {edge,-45} {weight,7} МВт");
+                totalWeight += weight;
+            }
+
+            AppendLine(Color.FromArgb(100, 100, 100), new string('-', 58));
+            AppendLine(Color.FromArgb(255, 200, 50),
+                $"  Рёбер в МОД: {mstEdges.Count}   |   Суммарная мощность: {totalWeight} МВт");
+            AppendLine(Color.Empty, "");
+            AppendLine(Color.FromArgb(160, 200, 255),
+                "Интерпретация: МОД — минимальная инфраструктура линий электропередачи,");
+            AppendLine(Color.FromArgb(160, 200, 255),
+                "обеспечивающая связность всех узлов энергосистемы.");
             AppendLine(Color.Empty, "");
         }
         //  Вспомогательные методы вывода
