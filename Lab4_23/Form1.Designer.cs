@@ -42,11 +42,9 @@
             this.lblSectionTraversal = new System.Windows.Forms.Label();
             this.btnInfo = new System.Windows.Forms.Button();
             this.btnLoad = new System.Windows.Forms.Button();
-            // ЛР5 ДОБАВЛЕНО: новые кнопки для алгоритма Дейкстры
             this.lblSectionDijkstra = new System.Windows.Forms.Label();
             this.btnDijkstraAll = new System.Windows.Forms.Button();
             this.btnDijkstraPath = new System.Windows.Forms.Button();
-            // ЛР5 ДОБАВЛЕНО ────────────────────────────
             this.panelInput = new System.Windows.Forms.Panel();
             this.cmbEnd = new System.Windows.Forms.ComboBox();
             this.lblEndVertex = new System.Windows.Forms.Label();
@@ -85,11 +83,9 @@
             this.panelButtons.Controls.Add(this.lblSectionTraversal);
             this.panelButtons.Controls.Add(this.btnInfo);
             this.panelButtons.Controls.Add(this.btnLoad);
-            // ЛР5 ДОБАВЛЕНО: регистрируем новые кнопки Дейкстры в панели
             this.panelButtons.Controls.Add(this.btnDijkstraPath);
             this.panelButtons.Controls.Add(this.btnDijkstraAll);
             this.panelButtons.Controls.Add(this.lblSectionDijkstra);
-            // ЛР5 ДОБАВЛЕНО ────────────────────────────
             this.panelButtons.Location = new System.Drawing.Point(12, 50);
             this.panelButtons.Name = "panelButtons";
             this.panelButtons.Size = new System.Drawing.Size(220, 590);
@@ -239,10 +235,9 @@
             this.btnClear.UseVisualStyleBackColor = false;
             this.btnClear.Cursor = System.Windows.Forms.Cursors.Hand;
             this.btnClear.Click += new System.EventHandler(this.btnClear_Click);
-            // ЛР5 ДОБАВЛЕНО ────────────────────────────────────────────────────
+            // 
             // lblSectionDijkstra
             // 
-            this.lblSectionDijkstra = new System.Windows.Forms.Label();
             this.lblSectionDijkstra.AutoSize = true;
             this.lblSectionDijkstra.Font = new System.Drawing.Font("Segoe UI", 8F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point);
             this.lblSectionDijkstra.ForeColor = System.Drawing.Color.Gray;
@@ -254,7 +249,6 @@
             // 
             // btnDijkstraAll — все расстояния от выбранной вершины
             // 
-            this.btnDijkstraAll = new System.Windows.Forms.Button();
             this.btnDijkstraAll.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(211)))), ((int)(((byte)(84)))), ((int)(((byte)(0)))));
             this.btnDijkstraAll.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.btnDijkstraAll.FlatAppearance.BorderSize = 0;
@@ -271,7 +265,6 @@
             // 
             // btnDijkstraPath — кратчайший путь между двумя вершинами
             // 
-            this.btnDijkstraPath = new System.Windows.Forms.Button();
             this.btnDijkstraPath.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(230)))), ((int)(((byte)(126)))), ((int)(((byte)(34)))));
             this.btnDijkstraPath.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.btnDijkstraPath.FlatAppearance.BorderSize = 0;

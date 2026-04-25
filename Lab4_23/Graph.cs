@@ -322,5 +322,141 @@ namespace Lab4_23
             path.Reverse(); //переворачиваем — был от цели к старту
             return path;
         }
+        //  Точки сочленения (алгоритм Тарьяна)
+
+        /// <summary>
+        /// Находит все точки сочленения графа алгоритмом Тарьяна.
+        /// Точка сочленения — вершина, удаление которой увеличивает число компонент связности.
+        /// Алгоритм основан на DFS и вычисляет:
+        ///   disc[v] — время первого посещения вершины v;
+        ///   low[v]  — минимальное disc, достижимое из поддерева v.
+        /// Условие точки сочленения (не корень): low[child] >= disc[v].
+        /// Условие для корня DFS: корень является точкой сочленения, если у него >= 2 детей.
+        /// </summary>
+        public List<string> FindArticulationPoints()
+        {
+            var result = new List<string>();
+            var visited = new HashSet<string>();
+            var disc = new Dictionary<string, int>();   // ЛР6: время обнаружения
+            var low = new Dictionary<string, int>();   // ЛР6: минимальное достижимое время
+            var parent = new Dictionary<string, string?>(); // ЛР6: родитель в дереве DFS
+
+            int timer = 0;
+
+            // ЛР6: рекурсивный DFS для вычисления disc и low
+            void Dfs(string v)
+            {
+                visited.Add(v);
+                disc[v] = low[v] = timer++;
+                int childCount = 0; // ЛР6: число детей в дереве DFS
+
+                foreach (var (neighbor, _) in _adjacency[v])
+                {
+                    if (!visited.Contains(neighbor))
+                    {
+                        childCount++;
+                        parent[neighbor] = v;
+                        Dfs(neighbor);
+
+                        // ЛР6: обновляем low[v] через потомка
+                        low[v] = Math.Min(low[v], low[neighbor]);
+
+                        // ЛР6: условие точки сочленения для не-корня
+                        bool isRoot = !parent.ContainsKey(v) || parent[v] == null;
+                        if (!isRoot && low[neighbor] >= disc[v] && !result.Contains(v))
+                            result.Add(v);
+
+                        // ЛР6: условие точки сочленения для корня DFS
+                        if (isRoot && childCount == 2 && !result.Contains(v))
+                            result.Add(v);
+                    }
+                    else if (neighbor != parent.GetValueOrDefault(v))
+                    {
+                        // ЛР6: обратное ребро — обновляем low через уже посещённого соседа
+                        low[v] = Math.Min(low[v], disc[neighbor]);
+                    }
+                }
+            }
+
+            // ЛР6: запускаем DFS от каждой непосещённой вершины
+            foreach (string v in _adjacency.Keys)
+            {
+                if (!visited.Contains(v))
+                {
+                    parent[v] = null;
+                    Dfs(v);
+                }
+            }
+
+            return result;
+        }
+
+
+        //  Минимальное остовное дерево (алгоритм Прима)
+
+        /// <summary>
+        /// Строит минимальное остовное дерево алгоритмом Прима.
+        /// МОД — подграф, соединяющий все вершины с минимальной суммой весов рёбер.
+        /// Алгоритм жадно добавляет ребро минимального веса, соединяющее
+        /// вершину внутри МОД с вершиной вне его.
+        /// Возвращает список рёбер МОД в формате (from, to, weight).
+        /// </summary>
+        public List<(string from, string to, int weight)> BuildMST_Prim()
+        {
+            if (_adjacency.Count == 0) return new List<(string, string, int)>();
+
+            var mstEdges = new List<(string from, string to, int weight)>();
+            var inMST = new HashSet<string>();
+            // ЛР6: минимальный вес ребра, соединяющего вершину с МОД
+            var minWeight = new Dictionary<string, int>();
+            // ЛР6: через какую вершину МОД достигается данная вершина
+            var mstParent = new Dictionary<string, string?>();
+
+            //  инициализация — все веса бесконечность
+            foreach (string v in _adjacency.Keys)
+            {
+                minWeight[v] = int.MaxValue;
+                mstParent[v] = null;
+            }
+
+            //стартуем с первой вершины
+            string start = _adjacency.Keys.First();
+            minWeight[start] = 0;
+
+            for (int i = 0; i < _adjacency.Count; i++)
+            {
+                // ЛР6: выбираем вершину вне МОД с минимальным весом ребра к МОД
+                string? u = null;
+                int best = int.MaxValue;
+                foreach (string v in _adjacency.Keys)
+                {
+                    if (!inMST.Contains(v) && minWeight[v] < best)
+                    {
+                        best = minWeight[v];
+                        u = v;
+                    }
+                }
+
+                if (u == null) break; // ЛР6: граф несвязный — остальные недостижимы
+
+                inMST.Add(u);
+
+                // ЛР6: добавляем ребро в МОД (кроме стартовой вершины)
+                if (mstParent[u] != null)
+                    mstEdges.Add((mstParent[u]!, u, minWeight[u]));
+
+                // ЛР6: обновляем минимальные веса для соседей u
+                foreach (var (neighbor, weight) in _adjacency[u])
+                {
+                    if (!inMST.Contains(neighbor) && weight < minWeight[neighbor])
+                    {
+                        minWeight[neighbor] = weight;
+                        mstParent[neighbor] = u; // ЛР6: запоминаем, через кого добавляем
+                    }
+                }
+            }
+
+            return mstEdges;
+        }
     }
 }
