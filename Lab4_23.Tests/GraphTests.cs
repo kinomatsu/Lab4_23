@@ -444,5 +444,263 @@ E;F;3
             Assert.That(components.Count, Is.EqualTo(1),
                 "Граф энергосистемы должен быть связным");
         }
+        //  ЛР5 — Тесты алгоритма Дейкстры
+
+        /// <summary>
+        /// Взвешенный граф для тестов Дейкстры:
+        ///
+        ///  A --1-- B --4-- D
+        ///  |       |
+        ///  2       2
+        ///  |       |
+        ///  C --1-- E
+        ///
+        /// Кратчайшие расстояния от A:
+        ///   A=0, B=1, C=2, E=3, D=5
+        /// </summary>
+        private static Graph WeightedGraph() => GraphFromText(@"
+VERTICES
+A
+B
+C
+D
+E
+EDGES
+A;B;1
+A;C;2
+B;D;4
+B;E;2
+C;E;1
+");
+
+        /// <summary>
+        /// Линейная цепочка A-B-C-D с разными весами.
+        /// A --5-- B --1-- C --10-- D
+        /// Кратчайший путь A→D = 16 (единственный).
+        /// </summary>
+        private static Graph LinearGraph() => GraphFromText(@"
+VERTICES
+A
+B
+C
+D
+EDGES
+A;B;5
+B;C;1
+C;D;10
+");
+
+        //  Тесты Dijkstra — расстояния
+
+        [Test]
+        public void Dijkstra_SourceDistanceIsZero()
+        {
+            var g = WeightedGraph();
+            var (dist, _) = g.Dijkstra("A");
+            Assert.That(dist["A"], Is.EqualTo(0));
+        }
+
+        [Test]
+        public void Dijkstra_DirectNeighbourDistance()
+        {
+            // A--1--B: расстояние до B = 1
+            var g = WeightedGraph();
+            var (dist, _) = g.Dijkstra("A");
+            Assert.That(dist["B"], Is.EqualTo(1));
+        }
+
+        [Test]
+        public void Dijkstra_ShortestPathThroughIntermediate()
+        {
+            // A→C = 2, A→B→E = 3, A→C→E = 3 — оба варианта дают 3
+            var g = WeightedGraph();
+            var (dist, _) = g.Dijkstra("A");
+            Assert.That(dist["E"], Is.EqualTo(3));
+        }
+
+        [Test]
+        public void Dijkstra_LongerDirectVsShortIndirect()
+        {
+            // A→B→D = 5, прямого A→D нет — расстояние = 5
+            var g = WeightedGraph();
+            var (dist, _) = g.Dijkstra("A");
+            Assert.That(dist["D"], Is.EqualTo(5));
+        }
+
+        [Test]
+        public void Dijkstra_AllVerticesHaveDistance()
+        {
+            // Граф связный — все вершины должны получить конечное расстояние
+            var g = WeightedGraph();
+            var (dist, _) = g.Dijkstra("A");
+            foreach (string v in g.Vertices)
+                Assert.That(dist[v], Is.Not.EqualTo(int.MaxValue),
+                    $"Вершина {v} должна быть достижима из A");
+        }
+
+        [Test]
+        public void Dijkstra_UnreachableVertex_MaxValue()
+        {
+            // Несвязный граф: C и D недостижимы из A
+            var g = DisconnectedGraph();
+            var (dist, _) = g.Dijkstra("A");
+            Assert.That(dist["C"], Is.EqualTo(int.MaxValue));
+            Assert.That(dist["D"], Is.EqualTo(int.MaxValue));
+        }
+
+        [Test]
+        public void Dijkstra_LinearChain_CorrectDistances()
+        {
+            // A--5--B--1--C--10--D: от A: B=5, C=6, D=16
+            var g = LinearGraph();
+            var (dist, _) = g.Dijkstra("A");
+            Assert.That(dist["B"], Is.EqualTo(5));
+            Assert.That(dist["C"], Is.EqualTo(6));
+            Assert.That(dist["D"], Is.EqualTo(16));
+        }
+
+        [Test]
+        public void Dijkstra_SymmetricResult()
+        {
+            // Неориентированный граф: dist(A→B) == dist(B→A)
+            var g = WeightedGraph();
+            var (distFromA, _) = g.Dijkstra("A");
+            var (distFromB, _) = g.Dijkstra("B");
+            Assert.That(distFromA["B"], Is.EqualTo(distFromB["A"]));
+        }
+
+        [Test]
+        public void Dijkstra_SingleVertex_ZeroDistance()
+        {
+            var g = SingleVertexGraph();
+            var (dist, _) = g.Dijkstra("X");
+            Assert.That(dist["X"], Is.EqualTo(0));
+        }
+
+        //  Тесты GetDijkstraPath — восстановление пути
+
+        [Test]
+        public void GetDijkstraPath_SameVertex_ReturnsSingleElement()
+        {
+            var g = WeightedGraph();
+            var (_, prev) = g.Dijkstra("A");
+            var path = g.GetDijkstraPath(prev, "A", "A");
+            Assert.That(path.Count, Is.EqualTo(1));
+            Assert.That(path[0], Is.EqualTo("A"));
+        }
+
+        [Test]
+        public void GetDijkstraPath_DirectNeighbour_TwoElements()
+        {
+            var g = WeightedGraph();
+            var (_, prev) = g.Dijkstra("A");
+            var path = g.GetDijkstraPath(prev, "A", "B");
+            Assert.That(path.Count, Is.EqualTo(2));
+            Assert.That(path[0], Is.EqualTo("A"));
+            Assert.That(path[^1], Is.EqualTo("B"));
+        }
+
+        [Test]
+        public void GetDijkstraPath_StartsWithSource()
+        {
+            var g = WeightedGraph();
+            var (_, prev) = g.Dijkstra("A");
+            var path = g.GetDijkstraPath(prev, "A", "D");
+            Assert.That(path.First(), Is.EqualTo("A"));
+        }
+
+        [Test]
+        public void GetDijkstraPath_EndsWithTarget()
+        {
+            var g = WeightedGraph();
+            var (_, prev) = g.Dijkstra("A");
+            var path = g.GetDijkstraPath(prev, "A", "D");
+            Assert.That(path.Last(), Is.EqualTo("D"));
+        }
+
+        [Test]
+        public void GetDijkstraPath_IsContiguous()
+        {
+            // Каждый следующий узел пути должен быть соседом предыдущего
+            var g = WeightedGraph();
+            var (_, prev) = g.Dijkstra("A");
+            var path = g.GetDijkstraPath(prev, "A", "D");
+            for (int i = 0; i < path.Count - 1; i++)
+            {
+                var neighbors = g.GetNeighbors(path[i]).Select(n => n.neighbor);
+                Assert.That(neighbors, Does.Contain(path[i + 1]),
+                    $"{path[i + 1]} не является соседом {path[i]}");
+            }
+        }
+
+        [Test]
+        public void GetDijkstraPath_LinearChain_CorrectPath()
+        {
+            // A--5--B--1--C--10--D: единственный путь A→D
+            var g = LinearGraph();
+            var (_, prev) = g.Dijkstra("A");
+            var path = g.GetDijkstraPath(prev, "A", "D");
+            Assert.That(path, Is.EqualTo(new List<string> { "A", "B", "C", "D" }));
+        }
+
+        [Test]
+        public void GetDijkstraPath_Unreachable_ReturnsEmpty()
+        {
+            // Несвязный граф: из A нельзя попасть в C
+            var g = DisconnectedGraph();
+            var (_, prev) = g.Dijkstra("A");
+            var path = g.GetDijkstraPath(prev, "A", "C");
+            Assert.That(path, Is.Empty);
+        }
+
+        [Test]
+        public void GetDijkstraPath_PathCostMatchesDijkstra()
+        {
+            // Сумма весов рёбер пути должна совпадать с dist[target]
+            var g = WeightedGraph();
+            var (dist, prev) = g.Dijkstra("A");
+            var path = g.GetDijkstraPath(prev, "A", "D");
+
+            int pathCost = 0;
+            for (int i = 0; i < path.Count - 1; i++)
+            {
+                pathCost += g.GetNeighbors(path[i])
+                             .First(n => n.neighbor == path[i + 1]).weight;
+            }
+
+            Assert.That(pathCost, Is.EqualTo(dist["D"]));
+        }
+
+        //  Тест Дейкстры на реальном файле
+
+        [Test]
+        public void Dijkstra_RealFile_SourceDistanceIsZero()
+        {
+            string path = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "energy_graph.txt");
+            if (!File.Exists(path))
+                Assert.Ignore("Файл energy_graph.txt не найден — пропускаем.");
+
+            var g = new Graph();
+            g.LoadFromFile(path);
+
+            var (dist, _) = g.Dijkstra("ЭС_Центральная");
+            Assert.That(dist["ЭС_Центральная"], Is.EqualTo(0));
+        }
+
+        [Test]
+        public void Dijkstra_RealFile_AllVerticesReachable()
+        {
+            string path = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "energy_graph.txt");
+            if (!File.Exists(path))
+                Assert.Ignore("Файл energy_graph.txt не найден — пропускаем.");
+
+            var g = new Graph();
+            g.LoadFromFile(path);
+
+            var (dist, _) = g.Dijkstra("ЭС_Центральная");
+            foreach (string v in g.Vertices)
+                Assert.That(dist[v], Is.Not.EqualTo(int.MaxValue),
+                    $"Вершина {v} должна быть достижима (граф связный)");
+        }
     }
 }
