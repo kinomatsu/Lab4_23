@@ -103,7 +103,6 @@ namespace Lab4_23
             { Warn("Выберите начальную и конечную вершины."); return; }
             RunDijkstraPath(start, end);
         }
-─
         // Обработчик: точки сочленения
         private void btnArticulation_Click(object sender, EventArgs e)
         {
